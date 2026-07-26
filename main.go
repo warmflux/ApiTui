@@ -24,6 +24,7 @@ var pendingUrl string
 var waitingParam bool = false
 var waitingBody bool = false
 var paramMatch = regexp.MustCompile(`\{(\w+)\}`)
+var apiAdded ApiItem
 
 func extractUrlParam(url string) []string {
 	matches := paramMatch.FindAllStringSubmatch(url, -1)
@@ -95,6 +96,10 @@ func main() {
 	response := tview.NewTextView().SetTextAlign(tview.AlignLeft).SetScrollable(true)
 	bodyContent := tview.NewTextArea()
 	paramContent := tview.NewTextArea()
+	methodInput := tview.NewInputField().SetFieldBackgroundColor(tcell.ColorWhite).SetFieldTextColor(tcell.ColorBlack).SetLabel("Method:")
+	urlInput := tview.NewInputField().SetFieldBackgroundColor(tcell.ColorWhite).SetFieldTextColor(tcell.ColorBlack).SetLabel("Url:")
+	needBodyInput := tview.NewInputField().SetFieldBackgroundColor(tcell.ColorWhite).SetFieldTextColor(tcell.ColorBlack).SetLabel("NeedBody:")
+	needParamInput := tview.NewInputField().SetFieldBackgroundColor(tcell.ColorWhite).SetFieldTextColor(tcell.ColorBlack).SetLabel("NeedParam:")
 
 	apiList := tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -121,6 +126,20 @@ func main() {
 		SetDirection(tview.FlexRow).
 		AddItem(newPrimitive("Body"), 2, 0, false).
 		AddItem(bodyContent, 0, 1, false)
+
+	listAddArea := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(newPrimitive("List Add"), 2, 0, false).
+		AddItem(methodInput, 2, 0, false).
+		AddItem(urlInput, 2, 0, false).
+		AddItem(needBodyInput, 2, 0, false).
+		AddItem(needParamInput, 2, 0, false)
+
+	grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
+		AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
+		AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
+		AddItem(bodyArea, 2, 1, 1, 1, 0, 0, false).
+		AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
 
 	sendRequest := func(method string, url string, body string) {
 		go func() {
@@ -184,8 +203,21 @@ func main() {
 
 		case 'f':
 			app.SetFocus(filterInput)
-
 			return nil
+		case 'a':
+			grid.RemoveItem(bodyArea)
+			grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
+				AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
+				AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
+				AddItem(listAddArea, 2, 1, 1, 1, 0, 0, false).
+				AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
+			app.SetFocus(methodInput)
+			return nil
+		case 'd':
+			apis = append(apis[:current], apis[current+1:]...)
+			updateList("")
+			return nil
+
 		}
 
 		if event.Key() == tcell.KeyEnter {
@@ -284,6 +316,7 @@ func main() {
 		}
 		return event
 	})
+
 	response.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyESC {
 			app.SetFocus(list)
@@ -292,11 +325,81 @@ func main() {
 		return event
 	})
 
-	grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
-		AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
-		AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
-		AddItem(bodyArea, 2, 1, 1, 1, 0, 0, false).
-		AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
+	methodInput.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEsc {
+			grid.RemoveItem(listAddArea)
+			grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
+				AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
+				AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
+				AddItem(bodyArea, 2, 1, 1, 1, 0, 0, false).
+				AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
+		}
+		if key == tcell.KeyEnter {
+			apiAdded.Method = methodInput.GetText()
+			app.SetFocus(urlInput)
+		}
+	})
+
+	urlInput.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEsc {
+			grid.RemoveItem(listAddArea)
+			grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
+				AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
+				AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
+				AddItem(bodyArea, 2, 1, 1, 1, 0, 0, false).
+				AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
+		}
+		if key == tcell.KeyEnter {
+			apiAdded.Url = urlInput.GetText()
+			app.SetFocus(needBodyInput)
+		}
+	})
+
+	needBodyInput.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEsc {
+			grid.RemoveItem(listAddArea)
+			grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
+				AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
+				AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
+				AddItem(bodyArea, 2, 1, 1, 1, 0, 0, false).
+				AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
+		}
+		if key == tcell.KeyEnter {
+			if needBodyInput.GetText() == "true" {
+				apiAdded.NeedBody = true
+			} else {
+				apiAdded.NeedBody = false
+			}
+			app.SetFocus(needParamInput)
+		}
+	})
+
+	needParamInput.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEsc {
+			grid.RemoveItem(listAddArea)
+			grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
+				AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
+				AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
+				AddItem(bodyArea, 2, 1, 1, 1, 0, 0, false).
+				AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
+		}
+		if key == tcell.KeyEnter {
+			if needParamInput.GetText() == "true" {
+				apiAdded.NeedParam = true
+			} else {
+				apiAdded.NeedParam = false
+			}
+			apis = append(apis, apiAdded)
+			updateList("")
+			grid.RemoveItem(listAddArea)
+			grid.AddItem(apiList, 0, 0, 3, 1, 0, 0, true).
+				AddItem(runBoard, 0, 1, 1, 2, 0, 0, false).
+				AddItem(paramArea, 1, 1, 1, 1, 0, 0, false).
+				AddItem(bodyArea, 2, 1, 1, 1, 0, 0, false).
+				AddItem(resArea, 1, 2, 2, 1, 0, 0, false)
+			app.SetFocus(list)
+		}
+	})
 
 	if err := app.SetRoot(grid, true).Run(); err != nil {
 		panic(err)
