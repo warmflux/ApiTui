@@ -1,0 +1,14 @@
+[
+ {
+  "method": "POST",
+  "url": "localhost:8081/api/login"
+ },
+ {
+  "method": "GET",
+  "url": "localhost:8081/api/me"
+ },
+ {
+  "method": "GET",
+  "url": "TEST"
+ }
+]
