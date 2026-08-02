@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	_ "time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -24,6 +25,7 @@ var paramMatch = regexp.MustCompile(`\{(\w+)\}`)
 var apiAdded ApiItem
 var auth string
 var body string
+var resp string
 
 func extractUrlParam(url string) []string {
 	matches := paramMatch.FindAllStringSubmatch(url, -1)
@@ -228,6 +230,7 @@ func main() {
 			app.SetFocus(pageChangeBox[name])
 			return nil
 		case event.Key() == tcell.KeyEnter:
+			response.SetText("")
 			pendingMethod = apis[current].Method
 			pendingUrl = apis[current].Url
 			apiBeRunning.SetText(pendingMethod + ":" + pendingUrl + " is waitting ...")
@@ -253,6 +256,7 @@ func main() {
 		case event.Rune() == 'd':
 			apis = append(apis[:current], apis[current+1:]...)
 			updateList("")
+			saveAPIToFile("./apis.json", apis)
 			return nil
 		}
 
@@ -288,14 +292,6 @@ func main() {
 	})
 
 	response.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyTab {
-			app.SetFocus(list)
-			return nil
-		}
-		return event
-	})
-
-	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == ' ' {
 			textInput := paramContent.GetText()
 			splitString := strings.Split(textInput, "\n")
@@ -318,9 +314,20 @@ func main() {
 			auth = authContent.GetText()
 			sendRequest(pendingMethod, pendingUrl, body, auth)
 			apiBeRunning.SetText(pendingMethod + ":" + pendingUrl + " is sent")
-
 			return nil
 		}
+		if event.Rune() == 'y' {
+			resp = response.GetText(false)
+			os.WriteFile("./log.txt", []byte(resp), 0644)
+		}
+		if event.Key() == tcell.KeyTab {
+			app.SetFocus(list)
+			return nil
+		}
+		return event
+	})
+
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			app.SetFocus(list)
 		}

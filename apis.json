@@ -1,14 +1,50 @@
 [
  {
-  "method": "POST",
-  "url": "localhost:8081/api/login"
+  "method":"POST",
+  "url":"localhost:8081/api/register"
  },
  {
-  "method": "GET",
-  "url": "localhost:8081/api/me"
+  "method":"POST",
+  "url":"localhost:8081/api/login"
  },
  {
-  "method": "GET",
-  "url": "TEST"
+  "method":"GET",
+  "url":"localhost:8081/api/me"
+ },
+ {
+  "method":"GET",
+  "url":"localhost:8081/api/users/{id}"
+ },
+ {
+  "method":"PUT",
+  "url":"localhost:8081/api/me"
+ },
+ {
+  "method":"PUT",
+  "url":"localhost:8081/api/email"
+ },
+ {
+  "method":"PUT",
+  "url":"localhost:8081/api/me/password"
+ },
+ {
+  "method":"POST",
+  "url":"localhost:8081/api/follow/{id}"
+ },
+ {
+  "method":"POST",
+  "url":"localhost:8081/api/follow/unset/{id}"
+ },
+ {
+  "method":"GET",
+  "url":"localhost:8081/api/follow/following"
+ },
+ {
+  "method":"GET",
+  "url":"localhost:8081/api/follow/follower"
+ },
+ {
+  "method":"DELETE",
+  "url":"localhost:8081/api/admin/users/{id}"
  }
 ]
